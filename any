@@ -1,0 +1,21 @@
+import json
+out_get = results.text
+out_dict = json.loads(out_get)
+x = out_dict
+
+search_str = 'a57597c876be7215007dc60c1128704e' #'dee2497b558b765c9c07ea23a8fa11b0' '8a0a29438052faed8a2532da50455756'
+# search_str = incident.properties.advisory_hash
+
+outer_nodes = x['objects'][1:] # Narrow down to information within objects[]
+ip_list = []
+
+for node in outer_nodes:
+  el = node['objects']
+  elem_having_hash = el['0']
+  elem_having_ip_addr = el['7']
+  if (elem_having_hash['hashes']['MD5'] == search_str):
+    ip_list.append(elem_having_ip_addr ['value'])
+    ip_uniq = set(ip_list) 
+
+for el in ip_uniq:
+  incident.addArtifact("String", el, 'IP found in Hash Search')
