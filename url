@@ -1,13 +1,4 @@
-import json
-
-inputs.rest_method = "GET"
-inputs.rest_url = 'https://raw.githubusercontent.com/GQiang88/stix-shifter/develop/data/cybox/carbon_black/cb_observed_156.json'
-
-inputs.rest_headers = """
-Version: 16.0
-Accept: application/json
-Content-Type: application/json
-SEC : 96f52574-17cb-42af-8255-39c45ab87326
-"""
-
-inputs.rest_verify = False
+function isObject(obj)
+{
+    return obj !== undefined && obj !== null && obj.constructor == Object;
+}
