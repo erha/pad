@@ -1,4 +1,24 @@
-function isObject(obj)
-{
-    return obj !== undefined && obj !== null && obj.constructor == Object;
-}
+const host = "accenturesingapore-demo.appomni.com";
+const url = "/api/v1/core/ruleevent/"
+
+headers = { 'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQzODIsImlzcyI6NDM4MiwiaWF0IjoxNjY2NjkwMDEzLCJleHAiOjE2NjY3MjYwMTMsImp0aSI6IjdlNWQ4ZmJlLTlkOTUtNDMzYy05MGE0LWQwZGY2Y2FmZjBkNyIsIm9yZyI6NDA4fQ.mk5y9kEuFTWDoCbeHhdS93Q0MpW9a52P_qqqhfzjYIk' };
+
+httpGet(host, url, null, headers).then( async (body)=> {
+    //console.log("1");
+    console.log(body);
+
+    appomni_response = JSON.parse(body);
+
+    console.log("Total finding: ", appomni_response.count);
+
+    var count = 0;
+    appomni_response.results.forEach ( (v) => {
+        count = count + 1;
+        console.log(count, ':', v.id, '=>', '(', v.risk_score, ')', v.rule__name);
+    });
+
+    //await httpGet('www.yahoo.com', '/', null);
+
+    //console.log("4");
+
+})
