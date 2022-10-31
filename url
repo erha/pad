@@ -1,24 +1,681 @@
-const host = "accenturesingapore-demo.appomni.com";
-const url = "/api/v1/core/ruleevent/"
+//const axios = require('axios');
+//const { execFileSync } = require('child_process');
+const https = require('https');
+const path = require('path');
 
-headers = { 'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQzODIsImlzcyI6NDM4MiwiaWF0IjoxNjY2NjkwMDEzLCJleHAiOjE2NjY3MjYwMTMsImp0aSI6IjdlNWQ4ZmJlLTlkOTUtNDMzYy05MGE0LWQwZGY2Y2FmZjBkNyIsIm9yZyI6NDA4fQ.mk5y9kEuFTWDoCbeHhdS93Q0MpW9a52P_qqqhfzjYIk' };
+// https://cp4s.apps.devcp4s.acnsgsoar.int
+// name: ElectrumDashboard
+// key: 7142cd1b083f535bba2a0d9af254dafd
+// passwd: eef72dc9a9f5406bb9b21ed87d0bacc5
 
-httpGet(host, url, null, headers).then( async (body)=> {
-    //console.log("1");
-    console.log(body);
+// /orgs/{org_id}
 
-    appomni_response = JSON.parse(body);
+let resilientKeyID = '7142cd1b083f535bba2a0d9af254dafd';
+let resilientKeySecret = 'eef72dc9a9f5406bb9b21ed87d0bacc5';
 
-    console.log("Total finding: ", appomni_response.count);
+let credentialString = resilientKeyID + ":" +  resilientKeySecret;
+var buff = Buffer.from(credentialString);
+let base64CredentialString = buff.toString('base64');
+let authorization = "Basic " + base64CredentialString;
 
-    var count = 0;
-    appomni_response.results.forEach ( (v) => {
-        count = count + 1;
-        console.log(count, ':', v.id, '=>', '(', v.risk_score, ')', v.rule__name);
+
+const APPOMNI_HOST = "accenturesingapore-demo.appomni.com";
+const APPOMNI_HEADER = { 'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQzODIsImlzcyI6NDM4MiwiaWF0IjoxNjY2NjkwMDEzLCJleHAiOjE2NjY3MjYwMTMsImp0aSI6IjdlNWQ4ZmJlLTlkOTUtNDMzYy05MGE0LWQwZGY2Y2FmZjBkNyIsIm9yZyI6NDA4fQ.mk5y9kEuFTWDoCbeHhdS93Q0MpW9a52P_qqqhfzjYIk' };
+
+const HOST = 'cp4s.apps.devcp4s.acnsgsoar.int';
+const PORT = 443
+const HEADER = { 'Authorization': authorization }
+
+function isObject(obj)
+{
+    return obj !== undefined && obj !== null && obj.constructor == Object;
+}
+
+function httpGet(params) {
+
+    const options = {
+        host: ('host' in params ? params['host'] : HOST),
+        port: ('port' in params ? params['port'] : PORT),
+        path: params['path'],
+        method: 'GET',
+        rejectUnauthorized: ('rejectUnauthorized' in params ? params['rejectUnauthorized'] : false),
+        headers: ('headers' in params ? params['headers'] : HEADER)
+    }
+
+    const p = new Promise((resolve, reject) => {
+        const req = https.request(options, (resp) => {
+            resp.setEncoding('utf8');
+            
+            let resp_body = '';
+            
+            resp.on('data', (chunk) => {
+                //console.log('Receiving data');
+                resp_body = resp_body + chunk.toString();
+            });
+            
+            resp.on('end', () => {
+                //console.log('Data received');
+                //const body = JSON.parse(resp_body);
+    
+                //console.debug(resp_body);
+               
+                resolve(resp_body);
+                //console.log("completed");
+            });
+        });
+        
+        req.on('error', (error) => {
+            //console.error(error);
+            reject(new Error(error));  
+        });
+        
+        req.end();
+
     });
 
-    //await httpGet('www.yahoo.com', '/', null);
+    return p;
+}
 
-    //console.log("4");
+function httpPost(params) {
+
+    //'Authorization': authorization,
+    //'Content-Type': 'application/json',
+    //'Content-Length': post_data.length
+
+    //var post_data = JSON.stringify(post_data_json);
+
+    let headers = ('headers' in params ? params['headers'] : HEADER);
+    let post_data = '';
+
+    if ('post_data' in params && isObject(params['post_data'])) {
+        post_data = JSON.stringify(params['post_data']);
+
+        headers['Content-Type'] = 'application/json';
+        headers['Content-Length'] = post_data.length;
+    }
+
+    const options = {
+        host: ('host' in params ? params['host'] : HOST),
+        port: ('port' in params ? params['port'] : PORT),
+        path: params['path'],
+        method: 'POST',
+        rejectUnauthorized: ('rejectUnauthorized' in params ? params['rejectUnauthorized'] : false),
+        headers: headers
+    }
+
+    const p = new Promise((resolve, reject) => {
+        const req = https.request(options, (resp) => {
+            resp.setEncoding('utf8');
+            
+            let resp_body = '';
+            
+            resp.on('data', (chunk) => {
+                //console.log('Receiving data');
+                resp_body = resp_body + chunk.toString();
+            });
+            
+            resp.on('end', () => {
+                //console.log('Data received');
+                //const body = JSON.parse(resp_body);
+    
+                //console.debug(resp_body);
+               
+                resolve(resp_body);
+                //console.log("completed");
+            });
+        });
+        
+        req.on('error', (error) => {
+            //console.error(error);
+            reject(new Error(error));  
+        });
+        
+        //console.debug('Posting:', post_data);
+        
+        req.write(post_data);
+        
+        req.end();
+
+    });
+
+    return p;
+}
+
+function getOrgId() {
+
+    const params = {
+        path: "/api/respond/rest/session",
+    }
+
+    const p = httpGet(
+        params
+        ).then( 
+            (resp_body) => {
+                //console.log('resolved');
+                const body = JSON.parse(resp_body);
+                
+                if ('orgs' in body && Array.isArray(body.orgs) && body.orgs.length > 0)
+                {
+                    //console.log(body.orgs[0].id);
+                    return(body.orgs[0].id);
+                }
+                else
+                {
+                    throw(new Error('Unable to retrieve Organization ID'));
+                }
+            },
+            (error) => {
+                //console.log('rejected');
+                throw(error);
+            }
+        );
+
+    return p;
+}
+
+function queryFieldID (org_id, field_name) {
+    console.log('queryFieldID:', 'org_id =', org_id);
+
+    url = path.join(
+        '/api/respond/rest/orgs', 
+        org_id.toString(), 
+        'types/incident/fields/properties.destination_ip').replaceAll("\\","/");
+
+    const options = {
+        host: HOST,
+        port: PORT,
+        path: url,
+        method: 'GET',
+        rejectUnauthorized: false,
+        headers: { 
+            'Authorization': authorization,
+        }
+    }
+
+    const p = new Promise((resolve, reject) => {
+        const req = https.request(options, (resp) => {
+            resp.setEncoding('utf8');
+
+            let resp_body = '';
+        
+            resp.on('data', (chunk) => {
+                resp_body = resp_body + chunk.toString();
+            });
+          
+            resp.on('end', () => {
+                const body = JSON.parse(resp_body);
+
+                resolve(body.id);
+            });
+        });
+
+        req.on('error', (error) => {
+            reject(new Error(error));
+        });
+          
+        req.end()
+    })
+
+    return p;    
+}
+
+function queryActiveIncident (org_id, conditions) {
+    console.log('queryActiveIncident:', 'org_id =', org_id);
+
+    //'/api/respond/rest/orgs/' + org_id + '/incidents/query'
+    const params = {
+        path: path.join(
+            '/api/respond/rest/orgs', 
+            org_id.toString(), 
+            //'incidents/query?return_level=full').replaceAll("\\","/");
+            'incidents/query_paged?return_level=partial').replaceAll("\\","/"),
+        post_data: {
+            "filters": [
+                {
+                    "conditions": conditions
+                }
+            ]
+        }
+    }
+
+    const p = httpPost(
+        params
+        ).then( 
+            (resp_body) => {
+                const body = JSON.parse(resp_body);
+
+                return body;
+            },
+            (error) => {
+                //console.log('rejected');
+                throw(error);
+            }
+        );
+
+    return p;
+}
+
+function getIncidentTypesId (org_id, incident_type_name) {
+
+    //console.log('getIncidentTypesId:', 'org_id =', org_id);
+
+    const params = {
+        path: path.join(
+                '/api/respond/rest/orgs', 
+                org_id.toString(), 
+                'incident_types').replaceAll("\\","/")
+    }
+
+    const p = httpGet(
+        params
+        ).then( 
+            (resp_body) => {
+                const body = JSON.parse(resp_body);
+
+                var id = -1; 
+                for (const [k, v] of Object.entries(body)) {
+                    if (v.name == incident_type_name) {
+                        id = v.id;
+                        break;
+                    }
+                }
+
+                if(id == -1) {
+                    throw(new Error("Incident type not found!"));
+                } else {
+                    return(id);
+                }
+            },
+            (error) => {
+                //console.log('rejected');
+                throw(error);
+            }
+        );
+
+    return p;
+}
+
+function postIncident (org_id, params) {
+    console.debug('>>> Executing postIncident');
+    
+    let date = new Date();
+    let epoch = Date.now();
+    
+    const formattedDate = date.toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    });
+
+    //{
+    //    'advisory_ipaddress': params['ips'].join(','),
+    //    'advisory_hash': params['hashes'].join(','),
+    //}
+    
+    //epoch
+
+    let post_data_json = {
+        'name' : params.name,
+        'description': params.description,
+        'org_handle': org_id,
+        'plan_status': 'A',
+        'discovered_date': params.discovered_date,
+        'incident_type_ids': params.incident_type_ids,
+        'properties': params.properties,
+        'data_source_id': params.data_source_id,
+    };
+    
+    let post_data = JSON.stringify(post_data_json);
+
+    let header = HEADER;
+    
+    header['Content-Type'] = 'application/json';
+    header['Content-Length'] = post_data.length;
+    
+    let URL = '/api/respond/rest/orgs/{inc_id}/incidents';
+    URL = URL.replace("{inc_id}", org_id);
+    
+    console.debug("Url:", URL);
+    console.debug("header:", JSON.stringify(header));
+
+    const options = {
+        host: HOST,
+        port: PORT,
+        path: URL,
+        method: 'POST',
+        rejectUnauthorized: false,
+        headers: header,
+    };
+    
+    const p = new Promise((resolve, reject) => {
+        const req = https.request(options, (resp) => {
+            resp.setEncoding('utf8');
+            
+            let resp_body = '';
+            
+            resp.on('data', (chunk) => {
+                console.log('Receiving data');
+                resp_body = resp_body + chunk.toString();
+            });
+            
+            resp.on('end', () => {
+                //console.log('Data received');
+                const body = JSON.parse(resp_body);
+
+                console.debug(resp_body);
+                
+                // When failed, cp4s will return the following json 
+                //  {
+                //        "success": false,
+                //        "title": null,
+                //        "message": "Invalid field name:  advisory_ipadress",
+                //        "hints": [
+                //            "field_defs"
+                //        ],
+                //        "error_code": "generic"
+                //  }
+                if ('success' in body && !body.success)
+                {
+                    reject(new Error(body.message));  
+                }
+                else if ('id' in body) 
+                {
+                    // Return incident id 
+                    resolve(body['id']);
+                }
+                else
+                {
+                    reject(new Error("Unexpected Error!!!"));  
+                }
+            });
+        });
+        
+        req.on('error', (error) => {
+            //console.log('Error!');
+            console.error(error);
+            reject(new Error(error));  
+        });
+        
+        console.debug('Posting:', post_data);
+        
+        req.write(post_data);
+        
+        req.end();
+    });
+
+    console.debug('>>> Exiting from postIncident');
+
+    return p;    
+}
+
+function getAppOmniFindings() {
+    const params = {
+        "host": APPOMNI_HOST,
+        "path": "/api/v1/core/ruleevent/",
+        "headers": APPOMNI_HEADER
+    };
+
+    const p = httpGet(
+        params
+        ).then( 
+            (resp_body) => {
+                const appomni_response = JSON.parse(resp_body);
+
+                return appomni_response;
+            },
+            (error) => {
+                //console.log('rejected');
+                throw(error);
+            }
+        );
+
+    return p;
+}
+
+//const url = 'https://cp4s.apps.devcp4s.acnsgsoar.int/orgs/201';
+
+//console.log(authorization);
+
+//path: '/api/respond/rest/orgs/201',
+/*
+const options = {
+    host: HOST,
+    port: PORT,
+    path: '/api/respond/rest/session',
+    method: 'GET',
+    rejectUnauthorized: false,
+    headers: { 'Authorization': authorization }
+}
+
+const request = https.request(options, (response) => {
+    let data = '';
+
+    //console.log(response);
+
+    response.on('data', (chunk) => {
+        data = data + chunk.toString();
+    });
+  
+    response.on('end', () => {
+        const body = JSON.parse(data);
+        //console.log(body);
+        //console.log(data);
+
+        console.log(body.orgs[0].id);
+    });
+})
+  
+request.on('error', (error) => {
+    console.log('An error', error);
+});
+
+request.end()
+*/
+
+let org_id = '';
+let incident_type_id = '';
+let dIncidents = {};
+let dAppOmni_data = {};
+
+//
+// 1. Get Org ID
+// 2. Get AppOmni Incident Type ID
+// 3. Get Active AppOmni Case from Resilience
+// 4. Query AppOmni to retrieve latest Open Cases
+// 5. Enumerate thru AppOmni's latest open cases
+// 6. If case found in Resilience-Active-AppOmni cases, ignore it
+// 7. If case not found, query Resilience and check if similar case has been closed
+// 8. If case has been closed, ignore it
+// 9. If not, create case
+
+// Step 1. Get Org ID
+getOrgId().then( async (_org_id) => {
+    org_id = _org_id;
+
+    // 2. Get AppOmni Incident Type ID
+    await getIncidentTypesId(org_id, 'AppOmni Alerts').then((_incident_type_id) => {
+        incident_type_id = _incident_type_id;
+    });
+    
+} ).then ( async () => {
+    // Step 3. Get Active AppOmni Case from Resilience
+    let conditions = [
+        { "field_name": "properties.alert_source", "method": "equals", "value": "AppOmni" },
+        { "field_name": "plan_status", "method": "equals", "value": "A" },
+    ];
+            
+    await queryActiveIncident(org_id, conditions).then( (_incident) => {
+        dIncidents = _incident;
+        //{
+        //recordsTotal: 2,
+        //recordsFiltered: 2,
+        //data: [
+        //    {
+        //      name: 'Alert name #1',
+        //      description: 'Alert description #1',
+        //      phase_id: 1003,
+        //      inc_training: false,
+        //      id: 2657,
+        //      sequence_code: '4BC0-156',
+        //      discovered_date: 1666946683907,
+        //      due_date: null,
+        //      create_date: 1666946684525,
+        //      owner_id: 90,
+        //      severity_code: 4,
+        //      plan_status: 'A'
+        //    },
+        // .....
+        //}
+        //console.log(dIncidents);
+    })
+})
+.then( async () => {
+    // Step 4. Query AppOmni to retrieve latest Open Cases
+
+    await getAppOmniFindings().then( (_dAppOmni_data) => {
+        //console.log(appOmniData);
+        dAppOmni_data = _dAppOmni_data; 
+        //{
+        //    count: 65,
+        //    next: null,
+        //    previous: null,
+        //    results: [
+        //      {
+        //        id: 34231,
+        //        created: '2022-10-06T05:39:13.477153Z',
+        //        status: 'reopened',
+        //        service_type: 'snow',
+        //        service_org_id: 13437,
+        //        policy_id: 225491,
+        //        policy__name: 'ServiceNow: Baseline Posture Settings',
+        //        policy__policy_type: 'snow',
+        //        rule_id: 25150,
+        //        rule__name: 'Downloadable Mime Types System Setting Rule',
+        //        risk_score: '50',
+        //        total_event_instances: 1,
+        //        event_last_activated: '2022-10-31T04:17:24.444502Z',
+        //        closed_on: null,
+        //        closing_method: null,
+        //        instances_truncated: false,
+        //        additional_details: null,
+        //        compliance_controls_count: 0,
+        //        rule__rule_posture_category: 'system_config',
+        //        rule__rule_posture_subcategory: 'other_security_settings',
+        //        rule__service_specific_category: null,
+        //        rule__system_description: null
+        //      },
+    });
+})
+.then( () => {
+    // 5. Enumerate thru AppOmni's latest open cases
+    // 6. If case found in Resilience-Active-AppOmni cases, ignore it
+
+    //console.log("Total finding: ", dAppOmni_data.count);
+
+    let count = 0;
+    let aToAppend = [];
+
+    dAppOmni_data.results.forEach ( (a) => {
+        count = count + 1;
+        console.log(count, ':', a.id, '=>', '(', a.risk_score, ')', a.rule__name);
+
+        let found = false;
+
+        dIncidents.data.forEach( (r) => {
+            if (r.name == a.rule__name) {
+                found = true;
+                return;
+            }
+        })
+
+        if (!found) {
+            // 7. If case not found, query Resilience and check if similar case has been closed
+            // 8. If case has been closed, ignore it
+            // 9. If not, create case
+
+            aToAppend.push(a);
+        } else {
+            console.log('Skip ' + a.rule__name + '. Incident already exist in SOAR');
+        }
+    });
+
+    return (aToAppend);
+})
+.then( () => {
+    // Creating the case in Resilience
+
+    aToAppend.forEach( (el) => {
+        let epoch = Date.now();
+        let incident = {
+            'name' : el.rule__name,
+            'description': 'Alert description #1',
+            'discovered_date': epoch,
+            'incident_type_ids': [ incident_type_id ],
+            'properties': { 
+                'alert_source': 'AppOmni' 
+            },
+            'severity_code': 4
+        };
+    
+        postIncident(org_id, incident);
+    })
 
 })
+.catch( (error) => {
+
+})
+
+            /*
+            let epoch = Date.now();
+            let incident = {
+                'name' : 'Alert name #1',
+                'description': 'Alert description #1',
+                'discovered_date': epoch,
+                'incident_type_ids': [ incident_type_id ],
+                'properties': { 
+                    'alert_source': 'AppOmni' 
+                },
+                'severity_code': 4
+            };
+
+            postIncident(org_id, incident);
+*/
+/*
+            let conditions = [
+//                    {"field_name": "name", "method": "equals", "value": title}
+//                    {"field_name": "properties.sentinel_profile", "method": "equals", "value": "profile_a"}
+//                    {"field_name": "properties.sentinel_incident_number", "method": "equals", "value": "59c68914-0282-41af-80d6-4b9bdf29b736"}
+                { "field_name": "properties.alert_source", "method": "equals", "value": "AppOmni" },
+                { "field_name": "plan_status", "method": "equals", "value": "A" },
+//                { "field_name": "incident_type_ids", "method": "equals", "value": incident_type_id }
+            ];
+
+            queryActiveIncident(org_id, conditions).then( (incident) => {
+                console.log(incident);
+            })
+
+        //queryFieldID(org_id, 'destination_ip').then( (data) => {
+         //   console.log(data);
+        })
+    //});
+
+
+    });
+
+console.log('testing');
+*/
+
+
+
+
+
+//axios.get('https://cp4s.apps.devcp4s.acnsgsoar.int/orgs/201', {
+//    headers: {
+//      'Authorization': authorization 
+//    }
+//  })
+//    .then((res) => {
+//        console.log(`Status: ${res.status}`);
+//        console.log('Body: ', res.data);
+//    }).catch((err) => {
+//        console.error(err);
+//    });
+
