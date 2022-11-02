@@ -1,1 +1,61 @@
+import json
+import requests
 
+from requests.auth import HTTPBasicAuth
+
+class Incident:
+    name = "Client-Callable Script Includes are Public System Setting Rule"
+
+UID = "superadmin"
+PWD = 'Z!x2c3v4'
+
+PUT_URL = "https://dev116414.service-now.com/api/now/table/sys_properties/{{ sys_id }}"
+GET_URL = "https://dev116414.service-now.com/api/now/table/sys_properties?name={{ name }}"
+POST_URL = "https://dev116414.service-now.com/api/now/table/sys_properties"
+
+incident = Incident()
+
+params = { 'field_name': '' }
+
+sys_id = ""
+
+if incident.name == 'Allow Embedded HTML Code System Setting Rule':
+    params['field_name'] = 'glide.ui.security.allow_codetag'
+    params['data'] = {'value': 'false'}
+elif incident.name == 'Bypass Multi-Factor Authentication count System Setting Rule':
+    params['field_name'] = 'glide.authenticate.multifactor.setup.bypass.count'
+    params['data'] = {'value': '0'}
+elif incident.name == 'Require Mobile Pin System Setting Rule':
+    params['field_name'] = 'glide.sg.require_mobile_application_pin'
+    params['data'] = {'value': 'true'}
+elif incident.name == 'Client-Callable Script Includes are Public System Setting Rule':
+    params['field_name'] = 'glide.script.ccsi.ispublic'
+    params['data'] = {'value': 'false'}
+    params['insert_data'] = {'name': params['field_name'], 'value': 'false'}
+
+if params['field_name'] != "":
+    url = GET_URL.replace("{{ name }}", params['field_name'])
+    response = requests.get(url, auth=HTTPBasicAuth(UID, PWD))
+    response_json = json.loads(response.text)
+    print(response_json)
+    if 'result' in response_json and \
+        len(response_json['result']) > 0 and \
+        'name' in response_json['result'][0] and \
+        response_json['result'][0]['name'] == params['field_name'] and \
+        'sys_id' in response_json['result'][0]:
+        
+        sys_id = response_json['result'][0]['sys_id']
+        print("sys_id for", params['field_name'], ":", sys_id)
+
+    elif 'result' in response_json and \
+        len(response_json['result']) == 0:
+        ### Not exist...
+        response = requests.post(POST_URL, auth=HTTPBasicAuth(UID, PWD), json=params['insert_data'])
+        print(response.text)
+
+if sys_id != "" and 'data' in params:
+    url = PUT_URL.replace("{{ sys_id }}", sys_id)
+
+    response = requests.put(url, auth=HTTPBasicAuth(UID, PWD), json=params['data'])
+
+    print(response.text)
