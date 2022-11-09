@@ -1,45 +1,7 @@
-import json
-out_get = results.text
-out_dict = json.loads(out_get)
-x = out_dict
-
-search_str = 'a57597c876be7215007dc60c1128704e' #'dee2497b558b765c9c07ea23a8fa11b0' '8a0a29438052faed8a2532da50455756'
-# search_str = incident.properties.advisory_hash
-
-outer_nodes = x['objects'][1:] # Narrow down to information within objects[]
-ip_list = []
-
-for node in outer_nodes:
-  el = node['objects']
-  elem_having_hash = el['0']
-  elem_having_ip_addr = el['7']
-  if (elem_having_hash['hashes']['MD5'] == search_str):
-    ip_list.append(elem_having_ip_addr ['value'])
-    ip_uniq = set(ip_list) 
-
-for el in ip_uniq:
-  incident.addArtifact("String", el, 'IP found in Hash Search')
-
-
-aHashes = 'a57597c876be7215007dc60c1128704e,5b9365bcf5c12d0585574edbae31bb97'.split(',') #'dee2497b558b765c9c07ea23a8fa11b0' '8a0a29438052faed8a2532da50455756'
-#search_str = incident.properties.advisory_hash
-
-aServers = []
-
-#outer_nodes = x['objects'][1:] # Narrow down to information within objects[]
-ip_list = []
-
-for obj in x['objects']:
-    if 'objects' in obj:
-        hashes = obj['objects']['0']['hashes']
-        for k, h in hashes.items():
-            for hashReceived in aHashes:
-                if h == hashReceived:
-                    #incident.addArtifact("String", el, 'IP found in Hash Search')
-                    ip = obj['objects']['7']['value']
-                    if ip not in aServers:
-                        aServers.append(ip)
-                        
-for server in aServers:                        
-    print('String', server, 'IP found in Hash Search')
-                    
+ip,sha1,md5
+192.168.0.1,1234567890123456789012345678901234567890,a57597c876be7215007dc60c1128704e
+.x.1,1234567890123456789112345678901234567890,dee2497b558b765c9c07ea23a8fa11b0
+10.0.0.1,1234567890123456789112345678901234567890,
+187.2.1.2,z234567890123456789112345678901234567890,
+224.0.0.1,f2345678901234567g911234567890123456789,
+127.0.0.1,e2345678901234567f9112345678901234567890,
